@@ -2,6 +2,8 @@
 "name": "转角毕业纪念册",
   "short_name": "转角纪念册",
   "display": "standalone",
+  "display_override": ["window-controls-overlay"],
+  "orientation": "portrait"
   "start_url": ".",
   "scope": "/"
   "icons": [
