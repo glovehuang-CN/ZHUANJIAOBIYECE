@@ -1,7 +1,7 @@
 {
 "name": "转角毕业纪念册",
   "short_name": "转角纪念册",
-  "display": "standalone",
+  "display": "fullscreen",
   "display_override": ["window-controls-overlay"],
   "orientation": "portrait"
   "start_url": ".",
