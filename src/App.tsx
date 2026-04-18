@@ -33,10 +33,11 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExportingCompare, setIsExportingCompare] = useState(false);
+  const [exportedImage, setExportedImage] = useState<string | null>(null);
+  const [exportedCompareImage, setExportedCompareImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [countdown, setCountdown] = useState(3);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const compareExportRef = useRef<HTMLDivElement>(null);
 
@@ -52,9 +53,13 @@ export default function App() {
     setTimeout(() => setToast(null), 2000);
   };
 
-  // Prevent context menu to protect images
+  // Prevent context menu to protect images, but allow it for exported results
   useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleContextMenu = (e: MouseEvent) => {
+      // Allow context menu only if it's the exported long-press image
+      if ((e.target as HTMLElement).getAttribute('alt') === 'Long press to save') return;
+      e.preventDefault();
+    };
     document.addEventListener('contextmenu', handleContextMenu);
     return () => document.removeEventListener('contextmenu', handleContextMenu);
   }, []);
@@ -63,102 +68,72 @@ export default function App() {
   useEffect(() => {
     if (!showSplash) return;
 
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setShowSplash(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
 
-    return () => clearInterval(timer);
+    return () => clearTimeout(timer);
   }, [showSplash]);
 
-  const handleSkipSplash = () => {
-    setShowSplash(false);
-  };
-
-  const handleVideoEnded = () => {
-    setShowSplash(false);
-  };
-
   const handleExport = async () => {
-    if (!exportRef.current) return;
-    try {
-      showToast('正在准备生成...', 'success');
-      // Small delay to ensure modal animation is finished and images are ready
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const canvas = await html2canvas(exportRef.current, {
-        useCORS: true,
-        allowTaint: false,
-        scale: 2,
-        logging: true,
-        width: exportRef.current.scrollWidth,
-        height: exportRef.current.scrollHeight,
-        windowWidth: exportRef.current.scrollWidth,
-        windowHeight: exportRef.current.scrollHeight,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0
-      });
-      const dataUrl = canvas.toDataURL('image/png');
-      
-      const link = document.createElement('a');
-      link.download = `转角网毕业纪念册-${selectedProduct?.name}.png`;
-      link.href = dataUrl;
-      link.click();
-      
-      setShowExportModal(false);
-      showToast('图片下载已开始', 'success');
-      
-    } catch (err) {
-      console.error('Export failed', err);
-      showToast('生成失败，请重试', 'error');
-    }
+    // Deprecated for direct button click, now automatic
   };
 
   const handleExportCompare = async () => {
-    if (!compareExportRef.current) return;
-    try {
-      showToast('正在准备对比表...', 'success');
-      // Small delay to ensure modal animation is finished and images are ready
-      await new Promise(resolve => setTimeout(resolve, 500));
+    // Deprecated for direct button click, now automatic
+  };
 
-      const canvas = await html2canvas(compareExportRef.current, {
+  const generateExport = async (type: 'single' | 'compare') => {
+    const target = type === 'single' ? exportRef.current : compareExportRef.current;
+    if (!target) return;
+    
+    try {
+      setIsGenerating(true);
+      // Wait for font/image rendering stabilizer
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const canvas = await html2canvas(target, {
         useCORS: true,
         allowTaint: false,
-        scale: 2,
+        scale: 3,
+        logging: false,
         backgroundColor: '#ffffff',
-        logging: true,
-        width: compareExportRef.current.scrollWidth,
-        height: compareExportRef.current.scrollHeight,
-        windowWidth: compareExportRef.current.scrollWidth,
-        windowHeight: compareExportRef.current.scrollHeight,
+        width: target.scrollWidth,
+        height: target.scrollHeight,
+        windowWidth: target.scrollWidth,
+        windowHeight: target.scrollHeight,
         x: 0,
         y: 0,
         scrollX: 0,
         scrollY: 0
       });
-      const dataUrl = canvas.toDataURL('image/png');
       
-      const link = document.createElement('a');
-      link.download = `转角网毕业纪念册-对比表.png`;
-      link.href = dataUrl;
-      link.click();
-      
-      setIsExportingCompare(false);
-      showToast('对比表下载已开始', 'success');
-      
+      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      if (type === 'single') setExportedImage(dataUrl);
+      else setExportedCompareImage(dataUrl);
+      setIsGenerating(false);
     } catch (err) {
-      console.error('Compare export failed', err);
+      console.error('Generation failed', err);
       showToast('生成失败，请重试', 'error');
+      setIsGenerating(false);
     }
   };
+
+  useEffect(() => {
+    if (showExportModal && selectedProduct) {
+      generateExport('single');
+    } else {
+      setExportedImage(null);
+    }
+  }, [showExportModal]);
+
+  useEffect(() => {
+    if (isExportingCompare && compareList.length > 0) {
+      generateExport('compare');
+    } else {
+      setExportedCompareImage(null);
+    }
+  }, [isExportingCompare]);
 
   const toggleCompare = (product: typeof PRODUCTS[0]) => {
     setCompareList(prev => {
@@ -191,27 +166,15 @@ export default function App() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1, ease: 'easeInOut' }}
-            className="fixed inset-0 z-[200] bg-black w-full max-w-[430px] mx-auto overflow-hidden pointer-events-auto"
+            className="fixed inset-0 z-[200] bg-white w-full max-w-[430px] mx-auto overflow-hidden pointer-events-auto"
           >
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              onEnded={handleVideoEnded}
-              className="w-full h-full object-cover"
-            >
-              <source src="https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/0418%E5%BC%80%E5%B1%8F9%E6%AF%9416.mp4" type="video/mp4" />
-            </video>
-            
-            <button
-              onClick={handleSkipSplash}
-              className="absolute top-[calc(20px+env(safe-area-inset-top))] right-4 bg-black/40 backdrop-blur-md border border-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 z-[201]"
-            >
-              <span>跳过</span>
-              <span className="w-px h-3 bg-white/30" />
-              <span className="tabular-nums">{countdown}s</span>
-            </button>
+            <img 
+              src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%BC%80%E5%B1%8F%E5%9B%BE%E7%89%87.webp")} 
+              className="w-full h-full object-cover shadow-2xl" 
+              alt="Splash Image" 
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -268,9 +231,10 @@ export default function App() {
               {/* Hero */}
               <div className="relative h-48 rounded-2xl overflow-hidden shadow-xl">
                       <img 
-                        src="https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E6%AF%95%E4%B8%9A%E5%86%8Capp-%E9%A6%96%E9%A1%B501.webp" 
+                        src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E6%AF%95%E4%B8%9A%E5%86%8Capp-%E9%A6%96%E9%A1%B501.webp")} 
                         className="w-full h-full object-cover" 
                         alt="Hero" 
+                        crossOrigin="anonymous"
                         referrerPolicy="no-referrer" 
                       />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
@@ -405,7 +369,7 @@ export default function App() {
                       className="flex items-center gap-1 text-primary text-xs font-bold bg-accent px-2 py-1 rounded-lg border border-primary/20"
                     >
                       <Download size={14} />
-                      导出长图
+                      生成对比表
                     </button>
                   )}
                 </div>
@@ -675,13 +639,30 @@ export default function App() {
                 <button onClick={() => setIsExportingCompare(false)} className="p-2"><X size={20} /></button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-4 bg-slate-100">
-                <div ref={compareExportRef} className="bg-white p-6 rounded-xl shadow-sm space-y-6">
-                  <div className="flex items-center gap-3 border-b pb-4">
+              <div className="flex-1 overflow-y-auto p-4 bg-slate-100 relative">
+                {isGenerating && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm">
+                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                    <p className="text-sm font-bold text-primary">正在绘制对比表...</p>
+                  </div>
+                )}
+                
+                <div className="relative">
+                  {exportedCompareImage && (
+                    <img 
+                      src={exportedCompareImage} 
+                      className="absolute inset-0 w-full h-auto z-10" 
+                      alt="Long press to save"
+                    />
+                  )}
+                  <div ref={compareExportRef} className="bg-white p-6 rounded-xl shadow-sm space-y-6">
+                    <div className="flex items-center gap-3 border-b pb-4">
                     <img 
                       src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
                       className="h-8 w-auto object-contain" 
                       alt="Logo" 
+                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
                     />
                     <div>
                       <h2 className="font-bold text-lg">转角网毕业纪念册</h2>
@@ -797,15 +778,18 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="p-4 bg-white border-t">
-                <button 
-                  onClick={handleExportCompare}
-                  className="w-full bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
-                >
-                  <Download size={20} />
-                  保存对比长图
-                </button>
+            <div className="p-4 bg-white border-t">
+                <div className="w-full py-4 text-center">
+                   <div className="flex flex-col items-center gap-2 text-primary">
+                     <div className="bg-primary/10 p-3 rounded-full">
+                       <Download size={24} className="animate-bounce" />
+                     </div>
+                     <p className="font-bold text-base">请长按上方图片保存至相册</p>
+                     <p className="text-xs text-slate-400">已生成高清图片，长按呼出系统菜单</p>
+                   </div>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -825,9 +809,24 @@ export default function App() {
                 <button onClick={() => setShowExportModal(false)}><X size={24} /></button>
               </div>
               
-              <div className="flex-1 overflow-y-auto rounded-xl shadow-2xl no-scrollbar bg-white p-0">
-                <div className="bg-white p-0 m-0" ref={exportRef}>
-                  <div className="relative">
+              <div className="flex-1 overflow-y-auto rounded-xl shadow-2xl no-scrollbar bg-white p-0 relative">
+                {isGenerating && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                    <p className="font-bold text-primary">正在生成单品分享图...</p>
+                  </div>
+                )}
+                
+                <div className="relative">
+                  {exportedImage && (
+                    <img 
+                      src={exportedImage} 
+                      className="absolute inset-0 w-full h-auto z-10" 
+                      alt="Long press to save"
+                    />
+                  )}
+                  <div className="bg-white p-0 m-0" ref={exportRef}>
+                    <div className="relative">
                     <img 
                       src={getProxyUrl(selectedProduct.image)} 
                       className="w-full" 
@@ -908,13 +907,19 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <button 
-                onClick={handleExport}
-                className="bg-primary text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
-              >
-                <Download size={20} /> 保存到相册
-              </button>
+            <div className="bg-white py-6 px-4 rounded-xl border-t mt-auto">
+                <div className="flex flex-col items-center gap-3 text-primary">
+                  <div className="bg-primary/10 p-4 rounded-full">
+                    <Download size={28} className="animate-bounce" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-lg mb-1">请长按上方图片保存至相册</p>
+                    <p className="text-sm text-slate-400">长按图片即可呼出手机「保存图片」菜单</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
