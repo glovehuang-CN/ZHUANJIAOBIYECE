@@ -41,10 +41,10 @@ export default function App() {
   const compareExportRef = useRef<HTMLDivElement>(null);
 
   const getProxyUrl = (url: string) => {
+    // Since user enabled CORS on Aliyun OSS, we can use direct URLs.
+    // We add a simple version param to avoid cached responses that might lack CORS headers.
     if (!url || !url.startsWith('http')) return url;
-    // Use absolute URL for the proxy to ensure reliability on mobile browsers
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/api/proxy?url=${encodeURIComponent(url)}`;
+    return `${url}${url.includes('?') ? '&' : '?'}v=oss-cors`;
   };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -238,9 +238,10 @@ export default function App() {
       <header className="bg-primary text-white px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-4 flex justify-between items-center shrink-0 shadow-lg z-40">
         <div className="flex items-center gap-2">
           <img 
-            src="https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E7%99%BD%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png" 
+            src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E7%99%BD%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
             className="h-8 w-auto object-contain" 
             alt="Logo" 
+            crossOrigin="anonymous"
             referrerPolicy="no-referrer"
           />
           <h1 className="font-bold text-lg tracking-tight">转角网毕业纪念册</h1>
@@ -327,9 +328,10 @@ export default function App() {
                   {BRAND_DATA.envPhotos.map((photo, idx) => (
                     <img 
                       key={idx} 
-                      src={photo} 
+                      src={getProxyUrl(photo)} 
                       className="h-32 w-48 object-cover rounded-lg shrink-0 shadow-md" 
                       alt="Env" 
+                      crossOrigin="anonymous"
                       referrerPolicy="no-referrer" 
                     />
                   ))}
@@ -359,9 +361,10 @@ export default function App() {
                         >
                           <div className="aspect-[3/4] relative">
                             <img 
-                              src={product.image} 
+                              src={getProxyUrl(product.image)} 
                               className="w-full h-full object-cover" 
                               alt={product.name} 
+                              crossOrigin="anonymous"
                               referrerPolicy="no-referrer" 
                             />
                             <div className="absolute top-2 right-2 bg-primary/80 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
@@ -435,9 +438,10 @@ export default function App() {
                                 <X size={12} />
                               </button>
                               <img 
-                                src={p.image} 
+                                src={getProxyUrl(p.image)} 
                                 className="w-12 h-16 object-cover mx-auto rounded shadow-sm mb-2" 
                                 alt={p.name} 
+                                crossOrigin="anonymous"
                                 referrerPolicy="no-referrer" 
                               />
                               <div className="font-bold truncate">{p.name}</div>
@@ -510,9 +514,10 @@ export default function App() {
                     {sample.images.map((img, idx) => (
                       <div key={idx} className="overflow-hidden shadow-lg">
                         <img 
-                          src={img} 
+                          src={getProxyUrl(img)} 
                           className="w-full h-auto object-cover" 
                           alt={sample.title} 
+                          crossOrigin="anonymous"
                           referrerPolicy="no-referrer" 
                         />
                       </div>
@@ -563,9 +568,10 @@ export default function App() {
 
               <div className="space-y-0">
                 <img 
-                  src={selectedProduct.image} 
+                  src={getProxyUrl(selectedProduct.image)} 
                   className="w-full aspect-[3/4] object-cover" 
                   alt={selectedProduct.name} 
+                  crossOrigin="anonymous"
                   referrerPolicy="no-referrer" 
                 />
                 
@@ -633,9 +639,10 @@ export default function App() {
 
                   <div className="pt-8 pb-4 flex justify-center">
                     <img 
-                      src="https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E6%AF%95%E4%B8%9A%E7%85%A7-%E9%80%89%E8%BD%AC%E8%A7%92slogan.png" 
+                      src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E6%AF%95%E4%B8%9A%E7%85%A7-%E9%80%89%E8%BD%AC%E8%A7%92slogan.png")} 
                       className="h-[21px] w-auto object-contain opacity-80" 
                       alt="Slogan" 
+                      crossOrigin="anonymous"
                       referrerPolicy="no-referrer"
                     />
                   </div>
@@ -675,8 +682,6 @@ export default function App() {
                       src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
                       className="h-8 w-auto object-contain" 
                       alt="Logo" 
-                      referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
                     />
                     <div>
                       <h2 className="font-bold text-lg">转角网毕业纪念册</h2>
@@ -694,8 +699,8 @@ export default function App() {
                               src={getProxyUrl(p.image)} 
                               className="w-12 h-16 object-cover mx-auto rounded shadow-sm mb-1" 
                               alt={p.name} 
-                              referrerPolicy="no-referrer"
                               crossOrigin="anonymous"
+                              referrerPolicy="no-referrer"
                             />
                             <div className="font-bold text-[10px] leading-tight">{p.name}</div>
                           </th>
@@ -777,8 +782,8 @@ export default function App() {
                           src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%AE%A2%E6%9C%8D%E4%BA%8C%E7%BB%B4%E7%A0%81.webp")} 
                           className="w-full h-full object-cover" 
                           alt="QR Code" 
-                          referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
                         />
                       </div>
                     </div>
@@ -786,8 +791,8 @@ export default function App() {
                       src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E6%AF%95%E4%B8%9A%E7%85%A7-%E9%80%89%E8%BD%AC%E8%A7%92slogan.png")} 
                       className="h-[21px] w-auto object-contain" 
                       alt="Slogan" 
-                      referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
                     />
                   </div>
                 </div>
@@ -827,8 +832,8 @@ export default function App() {
                       src={getProxyUrl(selectedProduct.image)} 
                       className="w-full" 
                       alt="Export" 
-                      referrerPolicy="no-referrer"
                       crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
                     />
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
                       <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
@@ -878,8 +883,8 @@ export default function App() {
                           src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
                           className="h-8 w-auto object-contain" 
                           alt="Logo" 
-                          referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
                         />
                         <div>
                           <p className="text-price font-bold text-2xl">¥{selectedProduct.price}</p>
@@ -892,8 +897,8 @@ export default function App() {
                             src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%AE%A2%E6%9C%8D%E4%BA%8C%E7%BB%B4%E7%A0%81.webp")} 
                             className="w-full h-full object-cover" 
                             alt="QR Code" 
-                            referrerPolicy="no-referrer"
                             crossOrigin="anonymous"
+                            referrerPolicy="no-referrer"
                           />
                         </div>
                         <p className="text-[10px] font-bold text-primary mt-2">转角网客服</p>
