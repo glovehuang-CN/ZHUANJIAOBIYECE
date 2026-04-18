@@ -57,7 +57,7 @@ export default function App() {
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
       // Allow context menu only if it's the exported long-press image
-      if ((e.target as HTMLElement).getAttribute('alt') === 'Long press to save') return;
+      if ((e.target as HTMLElement).classList.contains('saveable')) return;
       e.preventDefault();
     };
     document.addEventListener('contextmenu', handleContextMenu);
@@ -651,7 +651,7 @@ export default function App() {
                   {exportedCompareImage && (
                     <img 
                       src={exportedCompareImage} 
-                      className="absolute inset-0 w-full h-auto z-10" 
+                      className="absolute inset-0 w-full h-auto z-10 saveable" 
                       alt="Long press to save"
                     />
                   )}
@@ -821,7 +821,7 @@ export default function App() {
                   {exportedImage && (
                     <img 
                       src={exportedImage} 
-                      className="absolute inset-0 w-full h-auto z-10" 
+                      className="absolute inset-0 w-full h-auto z-10 saveable" 
                       alt="Long press to save"
                     />
                   )}
