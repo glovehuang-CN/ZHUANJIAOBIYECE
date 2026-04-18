@@ -33,7 +33,10 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExportingCompare, setIsExportingCompare] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [countdown, setCountdown] = useState(3);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const compareExportRef = useRef<HTMLDivElement>(null);
 
@@ -49,38 +52,78 @@ export default function App() {
     return () => document.removeEventListener('contextmenu', handleContextMenu);
   }, []);
 
+  // Splash Screen Logic
+  useEffect(() => {
+    if (!showSplash) return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setShowSplash(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [showSplash]);
+
+  const handleSkipSplash = () => {
+    setShowSplash(false);
+  };
+
+  const handleVideoEnded = () => {
+    setShowSplash(false);
+  };
+
   const handleExport = async () => {
     if (!exportRef.current) return;
     try {
+      showToast('正在生成并保存图片...', 'success');
       const canvas = await html2canvas(exportRef.current, {
         useCORS: true,
         scale: 2,
       });
+      const dataUrl = canvas.toDataURL('image/png');
+      
       const link = document.createElement('a');
-      link.download = `转角网毕业相册-${selectedProduct?.name}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.download = `转角网毕业纪念册-${selectedProduct?.name}.png`;
+      link.href = dataUrl;
       link.click();
+      
       setShowExportModal(false);
+      showToast('图片下载已开始', 'success');
+      
     } catch (err) {
       console.error('Export failed', err);
+      showToast('生成失败，请重试', 'error');
     }
   };
 
   const handleExportCompare = async () => {
     if (!compareExportRef.current) return;
     try {
+      showToast('正在生成并保存对比表...', 'success');
       const canvas = await html2canvas(compareExportRef.current, {
         useCORS: true,
         scale: 2,
         backgroundColor: '#ffffff'
       });
+      const dataUrl = canvas.toDataURL('image/png');
+      
       const link = document.createElement('a');
-      link.download = `转角网毕业相册-对比表.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.download = `转角网毕业纪念册-对比表.png`;
+      link.href = dataUrl;
       link.click();
+      
       setIsExportingCompare(false);
+      showToast('对比表下载已开始', 'success');
+      
     } catch (err) {
       console.error('Compare export failed', err);
+      showToast('生成失败，请重试', 'error');
     }
   };
 
@@ -107,7 +150,39 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-white overflow-hidden relative shadow-2xl pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="flex flex-col h-[100dvh] w-full max-w-[430px] mx-auto bg-white overflow-hidden relative shadow-2xl pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] border-x border-slate-100/50">
+      {/* Splash Screen */}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: 'easeInOut' }}
+            className="fixed inset-0 z-[200] bg-black w-full max-w-[430px] mx-auto overflow-hidden pointer-events-auto"
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              onEnded={handleVideoEnded}
+              className="w-full h-full object-cover"
+            >
+              <source src="https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E6%AF%95%E4%B8%9A%E5%AD%A3%E5%BC%80%E5%B1%8F%E5%8A%A8%E7%94%BB.mp4" type="video/mp4" />
+            </video>
+            
+            <button
+              onClick={handleSkipSplash}
+              className="absolute top-[calc(20px+env(safe-area-inset-top))] right-4 bg-black/40 backdrop-blur-md border border-white/20 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 z-[201]"
+            >
+              <span>跳过</span>
+              <span className="w-px h-3 bg-white/30" />
+              <span className="tabular-nums">{countdown}s</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Toast Feedback */}
       <AnimatePresence>
         {toast && (
@@ -135,7 +210,7 @@ export default function App() {
             alt="Logo" 
             referrerPolicy="no-referrer"
           />
-          <h1 className="font-bold text-lg tracking-tight">转角网毕业相册</h1>
+          <h1 className="font-bold text-lg tracking-tight">转角网毕业纪念册</h1>
         </div>
         <button 
           onClick={startVoiceRecognition}
@@ -228,7 +303,7 @@ export default function App() {
               className="p-4"
             >
               <div className="space-y-8">
-                {['12寸毕业相册系列·含摄影服务', '15寸毕业相册系列·含摄影服务'].map(cat => (
+                {['12寸毕业纪念册系列·含摄影服务', '15寸毕业纪念册系列·含摄影服务'].map(cat => (
                   <div key={cat} className="space-y-4">
                     <h3 className="text-lg font-bold text-slate-800 border-l-4 border-primary pl-3">{cat}</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -320,7 +395,7 @@ export default function App() {
                     <tbody>
                       {[
                         { key: 'size', label: '外观尺寸' },
-                        { key: 'pages', label: '相册页数' },
+                        { key: 'pages', label: '纪念册页数' },
                         { key: 'binding', label: '装帧方式' },
                         { key: 'craft', label: '核心工艺' },
                         { key: 'material', label: '封面材质' },
@@ -392,7 +467,7 @@ export default function App() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto bg-white border-t border-slate-100 flex justify-around items-center p-2 pb-[calc(8px+env(safe-area-inset-bottom))] z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-slate-100 flex justify-around items-center p-2 pb-[calc(8px+env(safe-area-inset-bottom))] z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         {[
           { id: 'home', icon: Home, label: '品牌' },
           { id: 'products', icon: Book, label: '产品' },
@@ -417,7 +492,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 flex flex-col w-full max-w-md mx-auto"
+            className="fixed inset-0 z-50 bg-black/80 flex flex-col w-full max-w-[430px] mx-auto"
           >
             <div className="flex-1 overflow-y-auto no-scrollbar bg-white rounded-t-3xl mt-12 relative pb-[env(safe-area-inset-bottom)]">
               <button 
@@ -539,7 +614,7 @@ export default function App() {
                       referrerPolicy="no-referrer"
                     />
                     <div>
-                      <h2 className="font-bold text-lg">转角网毕业相册</h2>
+                      <h2 className="font-bold text-lg">转角网毕业纪念册</h2>
                       <p className="text-[10px] text-slate-400">产品参数对比表</p>
                     </div>
                   </div>
@@ -559,7 +634,7 @@ export default function App() {
                     <tbody>
                       {[
                         { key: 'size', label: '外观尺寸' },
-                        { key: 'pages', label: '相册页数' },
+                        { key: 'pages', label: '纪念册页数' },
                         { key: 'binding', label: '装帧方式' },
                         { key: 'craft', label: '核心工艺' },
                         { key: 'material', label: '封面材质' },
@@ -664,7 +739,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-6 w-full max-w-md mx-auto"
+            className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-6 w-full max-w-[430px] mx-auto"
           >
             <div className="w-full max-h-full flex flex-col gap-4">
               <div className="flex justify-between items-center text-white">
@@ -672,8 +747,8 @@ export default function App() {
                 <button onClick={() => setShowExportModal(false)}><X size={24} /></button>
               </div>
               
-              <div className="flex-1 overflow-y-auto rounded-xl bg-white shadow-2xl no-scrollbar" ref={exportRef}>
-                <div className="p-0">
+              <div className="flex-1 overflow-y-auto rounded-xl shadow-2xl no-scrollbar bg-slate-200 p-0">
+                <div className="bg-white" ref={exportRef}>
                   <div className="relative">
                     <img src={selectedProduct.image} className="w-full" alt="Export" referrerPolicy="no-referrer" />
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
