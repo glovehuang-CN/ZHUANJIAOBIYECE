@@ -10,14 +10,20 @@
 
 @layer base {
   body {
-    @apply bg-white text-slate-900 antialiased select-none;
+    @apply bg-slate-50 text-slate-900 antialiased select-none;
     -webkit-touch-callout: none;
   }
   
-  /* Prevent image saving as requested */
+  /* Prevent image saving as requested, but allow saveable ones */
   img {
     @apply pointer-events-none;
     -webkit-user-drag: none;
+  }
+  
+  img.saveable {
+    @apply pointer-events-auto select-auto;
+    -webkit-touch-callout: default;
+    -webkit-user-drag: auto;
   }
 }
 
