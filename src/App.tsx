@@ -42,7 +42,9 @@ export default function App() {
 
   const getProxyUrl = (url: string) => {
     if (!url || !url.startsWith('http')) return url;
-    return `/api/proxy?url=${encodeURIComponent(url)}`;
+    // Use absolute URL for the proxy to ensure reliability on mobile browsers
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/api/proxy?url=${encodeURIComponent(url)}`;
   };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
