@@ -78,6 +78,32 @@ export default function App() {
     // Deprecated for direct button click, now automatic
   };
 
+  const openImageInNewWindow = (base64Image: string) => {
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+        <head>
+            <title>保存详情图</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; min-height: 100vh; font-family: sans-serif; padding: 20px; box-sizing: border-box; }
+                img { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 12px; }
+                .tip { margin-top: 24px; color: #0052D9; font-size: 15px; font-weight: bold; background: #fff; padding: 12px 24px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+            </style>
+        </head>
+        <body>
+            <img src="${base64Image}" />
+            <p class="tip">👆 长按上方图片选择“存储图像”</p>
+        </body>
+        </html>
+      `);
+      newWindow.document.close();
+    } else {
+      showToast('弹窗被拦截，请允许弹出窗口权限', 'error');
+    }
+  };
+
   const generateExport = async (type: 'single' | 'compare') => {
     const target = type === 'single' ? exportRef.current : compareExportRef.current;
     if (!target) return;
@@ -781,14 +807,21 @@ export default function App() {
               </div>
             </div>
 
-            <div className="p-4 bg-white border-t">
+            <div 
+              className="p-4 bg-white border-t active:bg-slate-50 transition-colors"
+              onClick={() => exportedCompareImage && openImageInNewWindow(exportedCompareImage)}
+            >
                 <div className="w-full py-4 text-center">
                    <div className="flex flex-col items-center gap-2 text-primary">
                      <div className="bg-primary/10 p-3 rounded-full">
-                       <Download size={24} className="animate-bounce" />
+                       {isGenerating ? (
+                         <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                       ) : (
+                         <Download size={24} className="animate-bounce" />
+                       )}
                      </div>
-                     <p className="font-bold text-base">请长按上方图片保存至相册</p>
-                     <p className="text-xs text-slate-400">已生成高清图片，长按呼出系统菜单</p>
+                     <p className="font-bold text-base">{isGenerating ? '正在生成对比表...' : '点击这里打开保存页面'}</p>
+                     <p className="text-xs text-slate-400">跳转到独立预览页后长按保存</p>
                    </div>
                 </div>
               </div>
@@ -910,14 +943,21 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-white py-6 px-4 rounded-xl border-t mt-auto">
+            <div 
+              className="bg-white py-6 px-4 rounded-xl border-t mt-auto active:bg-slate-50 transition-colors"
+              onClick={() => exportedImage && openImageInNewWindow(exportedImage)}
+            >
                 <div className="flex flex-col items-center gap-3 text-primary">
                   <div className="bg-primary/10 p-4 rounded-full">
-                    <Download size={28} className="animate-bounce" />
+                    {isGenerating ? (
+                      <div className="w-7 h-7 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Download size={28} className="animate-bounce" />
+                    )}
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-lg mb-1">请长按上方图片保存至相册</p>
-                    <p className="text-sm text-slate-400">长按图片即可呼出手机「保存图片」菜单</p>
+                    <p className="font-bold text-lg mb-1">{isGenerating ? '正在准备图片...' : '点击这里打开保存页面'}</p>
+                    <p className="text-sm text-slate-400">若长按无效，请点击此处进入独立预览页</p>
                   </div>
                 </div>
               </div>
