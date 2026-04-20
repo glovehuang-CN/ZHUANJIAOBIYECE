@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+:root {
+  /* Legacy-safe hex colors for Export modules (html2canvas oklch workaround) */
+  --legacy-slate-400: #94a3b8;
+  --legacy-slate-500: #64748b;
+  --legacy-slate-600: #475569;
+  --legacy-slate-700: #334155;
+  --legacy-slate-800: #1e293b;
+  --legacy-slate-50: #f8fafc;
+  --legacy-slate-100: #f1f5f9;
+  --legacy-primary-light: #e8f1ff;
+  --legacy-primary-alpha: rgba(0, 82, 217, 0.05);
+}
+
 @theme {
   --color-primary: #0052D9;
   --color-secondary: #FFFFFF;
