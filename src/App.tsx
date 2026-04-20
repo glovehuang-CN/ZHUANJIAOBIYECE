@@ -39,6 +39,35 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [focusViewImage, setFocusViewImage] = useState<string | null>(null);
+  
+  // Brand Protection Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('corner_auth_2026') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [authInput, setAuthInput] = useState('');
+  const [authError, setAuthError] = useState(false);
+
+  const handleAuth = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    // ZhuanjiaoPRO encoded as Wmh1YW5qaWFvUFJP
+    if (authInput === atob("Wmh1YW5qaWFvUFJP")) {
+      setIsAuthenticated(true);
+      try {
+        localStorage.setItem('corner_auth_2026', 'true');
+      } catch (e) {
+        console.warn("Storage blocked");
+      }
+    } else {
+      setAuthError(true);
+      setAuthInput('');
+      setTimeout(() => setAuthError(false), 2000);
+    }
+  };
+
   const exportRef = useRef<HTMLDivElement>(null);
   const compareExportRef = useRef<HTMLDivElement>(null);
 
@@ -236,6 +265,93 @@ export default function App() {
   const startVoiceRecognition = () => {
     showToast('语音功能开发中，敬请期待');
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-[#0052D9] flex items-center justify-center p-6 select-none overflow-hidden">
+        {/* Abstract Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-white blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-white blur-[120px]" />
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl space-y-6"
+        >
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center mx-auto mb-2">
+               <img 
+                 src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
+                 className="h-10 w-auto object-contain" 
+                 alt="Brand Logo" 
+                 crossOrigin="anonymous"
+                 referrerPolicy="no-referrer"
+               />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-lg font-bold text-slate-900 leading-tight">
+                转角网毕业季
+              </h1>
+              <p className="text-[12px] text-slate-400">请输入品牌授权码启用完整功能</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleAuth} className="space-y-5">
+            <div className="space-y-2">
+              <input 
+                type="password" 
+                autoFocus
+                placeholder="请输入授权码"
+                value={authInput}
+                onChange={(e) => setAuthInput(e.target.value)}
+                className={`w-full px-5 py-3 bg-slate-50 border-2 rounded-xl outline-none transition-all text-center tracking-[0.2em] font-mono text-base ${authError ? 'border-red-500 animate-shake' : 'border-slate-100 focus:border-[#0052D9]'}`}
+              />
+              <AnimatePresence>
+                {authError && (
+                  <motion.p 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-center text-[10px] text-red-500 font-medium"
+                  >
+                    授权码提示：请确认大写字母拼写
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full py-3.5 bg-[#0052D9] text-white rounded-xl font-bold shadow-lg shadow-blue-200 active:scale-[0.98] transition-all text-sm"
+            >
+              验证授权
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-50 text-center">
+            <p className="text-[9px] text-slate-400 uppercase tracking-widest font-medium">
+              ZHUANJIAO BRAND PROTECTION SYSTEM V2026.2.0
+            </p>
+          </div>
+        </motion.div>
+
+        <style>
+          {`
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              25% { transform: translateX(-8px); }
+              75% { transform: translateX(8px); }
+            }
+            .animate-shake {
+              animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+            }
+          `}
+        </style>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[100dvh] w-full max-w-[430px] mx-auto bg-white overflow-hidden relative shadow-2xl pb-[env(safe-area-inset-bottom)]">
