@@ -38,6 +38,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [focusViewImage, setFocusViewImage] = useState<string | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
   const compareExportRef = useRef<HTMLDivElement>(null);
 
@@ -79,28 +80,35 @@ export default function App() {
   };
 
   const openImageInNewWindow = (base64Image: string) => {
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-        <head>
-            <title>保存详情图</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8fafc; min-height: 100vh; font-family: sans-serif; padding: 20px; box-sizing: border-box; }
-                img { max-width: 100%; height: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 12px; }
-                .tip { margin-top: 24px; color: #0052D9; font-size: 15px; font-weight: bold; background: #fff; padding: 12px 24px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-            </style>
-        </head>
-        <body>
-            <img src="${base64Image}" />
-            <p class="tip">👆 长按上方图片选择“存储图像”</p>
-        </body>
-        </html>
-      `);
-      newWindow.document.close();
-    } else {
-      showToast('弹窗被拦截，请允许弹出窗口权限', 'error');
+    // First, show the internal focus view (100% reliable in iframe/mobile)
+    setFocusViewImage(base64Image);
+    showToast('预览已准备，长按图片即可保存');
+
+    // Attempt to open in new window as well, if browser allows
+    try {
+      const newWindow = window.open('about:blank', '_blank');
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+          <head>
+              <title>保存详情图</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                  body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; min-height: 100vh; font-family: sans-serif; padding: 20px; box-sizing: border-box; }
+                  img { max-width: 100%; height: auto; box-shadow: 0 4px 30px rgba(0,0,0,0.5); border-radius: 8px; }
+                  .tip { margin-top: 24px; color: #fff; font-size: 14px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 20px; }
+              </style>
+          </head>
+          <body>
+              <img src="${base64Image}" />
+              <p class="tip">👆 长按图片选择“保存到相册”</p>
+          </body>
+          </html>
+        `);
+        newWindow.document.close();
+      }
+    } catch (e) {
+      console.warn('Pop-up window blocked, using internal focus view.');
     }
   };
 
@@ -116,9 +124,10 @@ export default function App() {
       const canvas = await html2canvas(target, {
         useCORS: true,
         allowTaint: false,
-        scale: 3,
+        scale: 2, // Moderate scale for better compatibility with document.write base64 limits
         logging: false,
         backgroundColor: '#ffffff',
+        imageTimeout: 15000, // Fix hang issue
         width: target.scrollWidth,
         height: target.scrollHeight,
         windowWidth: target.scrollWidth,
@@ -126,13 +135,38 @@ export default function App() {
         x: 0,
         y: 0,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          // Deep fix: Convert all oklch colors to rgb in the cloned DOM
+          // html2canvas fails when it hits modern color functions
+          const elements = clonedDoc.getElementsByTagName('*');
+          for (let i = 0; i < elements.length; i++) {
+            const el = elements[i] as HTMLElement;
+            const style = window.getComputedStyle(el);
+            
+            // Fix text, background, border and shadow colors
+            const props = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'outlineColor', 'boxShadow'];
+            props.forEach(prop => {
+              const val = style.getPropertyValue(prop);
+              if (val && val.includes('oklch')) {
+                // Use a temporary div to let the browser convert oklch to rgb for us
+                const temp = document.createElement('div');
+                temp.style.color = val;
+                document.body.appendChild(temp);
+                const rgb = window.getComputedStyle(temp).color;
+                el.style.setProperty(prop, rgb, 'important');
+                document.body.removeChild(temp);
+              }
+            });
+          }
+        }
       });
       
-      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      const dataUrl = canvas.toDataURL('image/png', 0.9);
       if (type === 'single') setExportedImage(dataUrl);
       else setExportedCompareImage(dataUrl);
       setIsGenerating(false);
+      showToast('图片已生成，点击下方进行保存');
     } catch (err) {
       console.error('Generation failed', err);
       showToast('生成失败，请重试', 'error');
@@ -638,6 +672,36 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Full Screen Focus Preview */}
+      <AnimatePresence>
+        {focusViewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center p-4 w-full max-w-[430px] mx-auto"
+            onClick={() => setFocusViewImage(null)}
+          >
+            <div className="absolute top-6 right-6 text-white bg-white/20 p-2 rounded-full backdrop-blur-md">
+              <X size={24} />
+            </div>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-6">
+              <img 
+                src={focusViewImage} 
+                className="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg saveable cursor-pointer" 
+                alt="Long press to save"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="bg-white/90 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-2 shadow-xl animate-pulse">
+                <Check className="text-green-500" size={18} />
+                <span className="text-slate-900 font-bold text-sm">长按上方图片即可保存</span>
+              </div>
+              <p className="text-white/40 text-[10px]">点击空白区域返回</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Compare Export Modal */}
       <AnimatePresence>
         {isExportingCompare && (
@@ -808,10 +872,10 @@ export default function App() {
             </div>
 
             <div 
-              className="p-4 bg-white border-t active:bg-slate-50 transition-colors"
+              className="p-4 bg-white border-t active:bg-slate-50 transition-colors cursor-pointer"
               onClick={() => exportedCompareImage && openImageInNewWindow(exportedCompareImage)}
             >
-                <div className="w-full py-4 text-center">
+                <div className="w-full py-4 text-center pointer-events-none">
                    <div className="flex flex-col items-center gap-2 text-primary">
                      <div className="bg-primary/10 p-3 rounded-full">
                        {isGenerating ? (
@@ -944,10 +1008,10 @@ export default function App() {
             </div>
 
             <div 
-              className="bg-white py-6 px-4 rounded-xl border-t mt-auto active:bg-slate-50 transition-colors"
+              className="bg-white py-6 px-4 rounded-xl border-t mt-auto active:bg-slate-50 transition-colors cursor-pointer"
               onClick={() => exportedImage && openImageInNewWindow(exportedImage)}
             >
-                <div className="flex flex-col items-center gap-3 text-primary">
+                <div className="flex flex-col items-center gap-3 text-primary pointer-events-none">
                   <div className="bg-primary/10 p-4 rounded-full">
                     {isGenerating ? (
                       <div className="w-7 h-7 border-4 border-primary border-t-transparent rounded-full animate-spin" />
