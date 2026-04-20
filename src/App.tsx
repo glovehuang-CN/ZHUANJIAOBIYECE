@@ -121,22 +121,47 @@ export default function App() {
       // Wait for font/image rendering stabilizer
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // --- CRITICAL FIX: PRE-MEASURE AT LOCKED WIDTH ---
+      // Temporarily force the target to its export width to calculate the REAL height for this layout
+      const originalW = target.style.width;
+      const originalMaxW = target.style.maxWidth;
+      target.style.width = '375px';
+      target.style.maxWidth = '375px';
+      
+      // Force a browser reflow
+      const actualHeight = target.scrollHeight;
+      const actualWidth = 375;
+      
+      // Immediately restore original UI state to prevent flickers
+      target.style.width = originalW;
+      target.style.maxWidth = originalMaxW;
+      
       const canvas = await html2canvas(target, {
         useCORS: true,
         allowTaint: false,
-        scale: 2, // Moderate scale for better compatibility with document.write base64 limits
+        scale: 2,
         logging: false,
         backgroundColor: '#ffffff',
-        imageTimeout: 15000, // Fix hang issue
-        width: target.scrollWidth,
-        height: target.scrollHeight,
-        windowWidth: target.scrollWidth,
-        windowHeight: target.scrollHeight,
+        imageTimeout: 15000,
+        width: actualWidth,
+        height: actualHeight,
+        windowWidth: actualWidth,
+        windowHeight: actualHeight,
         x: 0,
         y: 0,
         scrollX: 0,
         scrollY: 0,
         onclone: (clonedDoc) => {
+          // Force the same standard layout on the clone
+          const clonedTarget = clonedDoc.getElementById(target.id) || clonedDoc.querySelector(`[ref="${type === 'single' ? 'exportRef' : 'compareExportRef'}"]`);
+          if (clonedTarget instanceof HTMLElement) {
+            clonedTarget.style.width = '375px';
+            clonedTarget.style.minWidth = '375px';
+            clonedTarget.style.height = 'auto'; // Let it grow vertically
+            clonedTarget.style.display = 'block';
+            clonedTarget.style.maxWidth = 'none';
+          }
+          
           // Deep fix: Convert all oklch colors to rgb in the cloned DOM
           // html2canvas fails when it hits modern color functions
           const elements = clonedDoc.getElementsByTagName('*');
@@ -724,7 +749,7 @@ export default function App() {
                 <button onClick={() => setIsExportingCompare(false)} className="p-2"><X size={20} /></button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-4 bg-slate-100 relative">
+              <div className="flex-1 overflow-y-auto p-4 bg-slate-100 relative items-center flex flex-col">
                 {isGenerating && (
                   <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm">
                     <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
@@ -732,15 +757,18 @@ export default function App() {
                   </div>
                 )}
                 
-                <div className="relative min-h-[400px]">
+                <div className="relative min-h-[400px] w-[375px] mx-auto flex flex-col items-center">
                   {exportedCompareImage && (
                     <img 
                       src={exportedCompareImage} 
-                      className="absolute inset-0 w-full h-full object-top z-20 saveable cursor-pointer" 
+                      className="w-full h-auto shadow-2xl z-20 saveable cursor-pointer" 
                       alt="Long press to save"
                     />
                   )}
-                  <div ref={compareExportRef} className={`bg-white p-6 rounded-xl shadow-sm space-y-6 ${exportedCompareImage ? 'opacity-0 select-none pointer-events-none' : 'opacity-100'}`}>
+                  <div 
+                    ref={compareExportRef} 
+                    className={`bg-white p-6 pb-20 rounded-xl shadow-md space-y-6 w-[375px] block align-top ${exportedCompareImage ? 'absolute top-0 left-0 opacity-0 select-none pointer-events-none' : 'relative opacity-100'}`}
+                  >
                     <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: '#e2e8f0' }}>
                     <img 
                       src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
@@ -859,13 +887,16 @@ export default function App() {
                         />
                       </div>
                     </div>
-                    <img 
-                      src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E6%AF%95%E4%B8%9A%E7%85%A7-%E9%80%89%E8%BD%AC%E8%A7%92slogan.png")} 
-                      className="h-[21px] w-auto object-contain" 
-                      alt="Slogan" 
-                      crossOrigin="anonymous"
-                      referrerPolicy="no-referrer"
-                    />
+                    <div className="flex flex-col items-end gap-1">
+                      <img 
+                        src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E6%AF%95%E4%B8%9A%E7%85%A7-%E9%80%89%E8%BD%AC%E8%A7%92slogan.png")} 
+                        className="h-[21px] w-auto object-contain" 
+                        alt="Slogan" 
+                        crossOrigin="anonymous"
+                        referrerPolicy="no-referrer"
+                      />
+                      <p className="text-[9px] text-slate-300">本页内容由转角网提供</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -907,7 +938,7 @@ export default function App() {
                 <button onClick={() => setShowExportModal(false)}><X size={24} /></button>
               </div>
               
-              <div className="flex-1 overflow-y-auto rounded-xl shadow-2xl no-scrollbar bg-white p-0 relative">
+              <div className="flex-1 overflow-y-auto rounded-xl shadow-2xl no-scrollbar bg-white p-0 relative items-center flex flex-col">
                 {isGenerating && (
                   <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
                     <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
@@ -915,15 +946,18 @@ export default function App() {
                   </div>
                 )}
                 
-                <div className="relative min-h-[400px]">
+                <div className="relative min-h-[400px] w-[375px] mx-auto flex flex-col items-center">
                   {exportedImage && (
                     <img 
                       src={exportedImage} 
-                      className="absolute inset-0 w-full h-full object-top z-20 saveable cursor-pointer" 
+                      className="w-full h-auto shadow-2xl z-20 saveable cursor-pointer" 
                       alt="Long press to save"
                     />
                   )}
-                  <div className={`bg-white p-0 m-0 ${exportedImage ? 'opacity-0 select-none pointer-events-none' : 'opacity-100'}`} ref={exportRef}>
+                  <div 
+                    ref={exportRef}
+                    className={`bg-white p-0 m-0 w-[375px] block align-top pb-20 ${exportedImage ? 'absolute top-0 left-0 opacity-0 select-none pointer-events-none' : 'relative opacity-100'}`}
+                  >
                     <div className="relative">
                     <img 
                       src={getProxyUrl(selectedProduct.image)} 
