@@ -23,7 +23,12 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased select-none;
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+  
+  /* Protected content area */
+  .protected-content {
+    @apply select-none;
     -webkit-touch-callout: none;
   }
   
