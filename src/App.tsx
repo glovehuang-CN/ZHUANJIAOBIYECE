@@ -620,7 +620,7 @@ export default function App() {
       {/* Compare Export Modal */}
       <AnimatePresence>
         {isExportingCompare && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -632,7 +632,7 @@ export default function App() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative bg-white rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative bg-white rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
             >
               <div className="p-4 border-b flex justify-between items-center">
                 <h3 className="font-bold">对比表预览</h3>
@@ -647,16 +647,16 @@ export default function App() {
                   </div>
                 )}
                 
-                <div className="relative">
+                <div className="relative min-h-[400px]">
                   {exportedCompareImage && (
                     <img 
                       src={exportedCompareImage} 
-                      className="absolute inset-0 w-full h-auto z-10 saveable" 
+                      className="absolute inset-0 w-full h-full object-top z-20 saveable cursor-pointer" 
                       alt="Long press to save"
                     />
                   )}
-                  <div ref={compareExportRef} className="bg-white p-6 rounded-xl shadow-sm space-y-6">
-                    <div className="flex items-center gap-3 border-b pb-4">
+                  <div ref={compareExportRef} className={`bg-white p-6 rounded-xl shadow-sm space-y-6 ${exportedCompareImage ? 'opacity-0 select-none pointer-events-none' : 'opacity-100'}`}>
+                    <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: '#e2e8f0' }}>
                     <img 
                       src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
                       className="h-8 w-auto object-contain" 
@@ -665,17 +665,17 @@ export default function App() {
                       referrerPolicy="no-referrer"
                     />
                     <div>
-                      <h2 className="font-bold text-lg">转角网毕业纪念册</h2>
-                      <p className="text-[10px] text-slate-400">产品参数对比表</p>
+                      <h2 className="font-bold text-lg" style={{ color: '#1e293b' }}>转角网毕业纪念册</h2>
+                      <p className="text-[10px]" style={{ color: 'var(--legacy-slate-400)' }}>产品参数对比表</p>
                     </div>
                   </div>
 
                   <table className="w-full text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-50">
-                        <th className="p-2 text-left border w-20">参数</th>
+                      <tr style={{ backgroundColor: 'var(--legacy-slate-50)' }}>
+                        <th className="p-2 text-left border w-20" style={{ borderColor: '#e2e8f0' }}>参数</th>
                         {compareList.map(p => (
-                          <th key={p.id} className="p-2 text-center border">
+                          <th key={p.id} className="p-2 text-center border" style={{ borderColor: '#e2e8f0' }}>
                             <img 
                               src={getProxyUrl(p.image)} 
                               className="w-12 h-16 object-cover mx-auto rounded shadow-sm mb-1" 
@@ -683,7 +683,7 @@ export default function App() {
                               crossOrigin="anonymous"
                               referrerPolicy="no-referrer"
                             />
-                            <div className="font-bold text-[10px] leading-tight">{p.name}</div>
+                            <div className="font-bold text-[10px] leading-tight" style={{ color: '#1e293b' }}>{p.name}</div>
                           </th>
                         ))}
                       </tr>
@@ -722,13 +722,19 @@ export default function App() {
 
                         return (
                           <tr key={row.key}>
-                            <td className="p-2 font-medium text-slate-500 border">{row.label}</td>
+                            <td className="p-2 font-medium border" style={{ color: 'var(--legacy-slate-500)', borderColor: '#e2e8f0' }}>{row.label}</td>
                             {compareList.map((p, idx) => {
                               const val = (p.params as any)[row.key];
                               const isBest = shouldHighlight && maxValue > 0 && numericValues[idx] === maxValue;
                               
                               return (
-                                <td key={p.id} className={`p-2 text-center border ${isBest ? 'text-primary font-bold bg-primary/5' : 'text-slate-700'}`}>
+                                <td key={p.id} className="p-2 text-center border" 
+                                    style={{ 
+                                      borderColor: '#e2e8f0', 
+                                      color: isBest ? '#0052D9' : 'var(--legacy-slate-700)',
+                                      fontWeight: isBest ? 'bold' : 'normal',
+                                      backgroundColor: isBest ? 'var(--legacy-primary-alpha)' : 'transparent'
+                                    }}>
                                   {row.key === 'content' ? (
                                     <div className="text-[9px] text-left space-y-0.5">
                                       {p.content ? (p.content as string[]).map((item, i) => (
@@ -744,10 +750,10 @@ export default function App() {
                           </tr>
                         );
                       })}
-                      <tr className="bg-primary/5">
-                        <td className="p-2 font-bold text-price border">标零售价</td>
+                      <tr style={{ backgroundColor: 'var(--legacy-primary-alpha)' }}>
+                        <td className="p-2 font-bold border" style={{ color: '#FF6B00', borderColor: '#e2e8f0' }}>标零售价</td>
                         {compareList.map(p => (
-                          <td key={p.id} className="p-2 text-center font-bold text-price border">
+                          <td key={p.id} className="p-2 text-center font-bold border" style={{ color: '#FF6B00', borderColor: '#e2e8f0' }}>
                             ¥{p.price}
                           </td>
                         ))}
@@ -755,10 +761,10 @@ export default function App() {
                     </tbody>
                   </table>
 
-                  <div className="pt-4 flex justify-between items-end border-t">
+                  <div className="pt-4 flex justify-between items-end border-t" style={{ borderColor: '#e2e8f0' }}>
                     <div className="space-y-1">
-                      <p className="text-[10px] text-slate-400">扫码了解更多产品详情</p>
-                      <div className="w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center shadow-sm">
+                      <p className="text-[10px]" style={{ color: 'var(--legacy-slate-400)' }}>扫码了解更多产品详情</p>
+                      <div className="w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center shadow-sm" style={{ border: '1px solid var(--legacy-slate-100)' }}>
                         <img 
                           src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%AE%A2%E6%9C%8D%E4%BA%8C%E7%BB%B4%E7%A0%81.webp")} 
                           className="w-full h-full object-cover" 
@@ -801,7 +807,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-6 w-full max-w-[430px] mx-auto"
+            className="fixed inset-0 z-[300] bg-black/90 flex items-center justify-center p-6 w-full max-w-[430px] mx-auto"
           >
             <div className="w-full max-h-full flex flex-col gap-4">
               <div className="flex justify-between items-center text-white">
@@ -817,15 +823,15 @@ export default function App() {
                   </div>
                 )}
                 
-                <div className="relative">
+                <div className="relative min-h-[400px]">
                   {exportedImage && (
                     <img 
                       src={exportedImage} 
-                      className="absolute inset-0 w-full h-auto z-10 saveable" 
+                      className="absolute inset-0 w-full h-full object-top z-20 saveable cursor-pointer" 
                       alt="Long press to save"
                     />
                   )}
-                  <div className="bg-white p-0 m-0" ref={exportRef}>
+                  <div className={`bg-white p-0 m-0 ${exportedImage ? 'opacity-0 select-none pointer-events-none' : 'opacity-100'}`} ref={exportRef}>
                     <div className="relative">
                     <img 
                       src={getProxyUrl(selectedProduct.image)} 
@@ -834,7 +840,7 @@ export default function App() {
                       crossOrigin="anonymous"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-white">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
                       <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
                       <p className="text-sm opacity-80">{selectedProduct.category}</p>
                     </div>
@@ -842,19 +848,19 @@ export default function App() {
                     <div className="p-6 space-y-6">
                       {selectedProduct.content && (
                         <div className="space-y-3">
-                          <h3 className="text-[10px] text-slate-400 uppercase tracking-wider">套餐内容</h3>
+                          <h3 className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--legacy-slate-400)' }}>套餐内容</h3>
                           <div className="space-y-1.5">
                             {(selectedProduct.content as string[]).map((item, idx) => (
                               <div key={idx} className="flex gap-2 items-start">
-                                <div className="w-1 h-1 bg-primary rounded-full mt-1.5 shrink-0" />
-                                <p className="text-xs text-slate-600 leading-relaxed">{item}</p>
+                                <div className="w-1 h-1 bg-primary rounded-full mt-1.5 shrink-0" style={{ backgroundColor: '#0052D9' }} />
+                                <p className="text-xs leading-relaxed" style={{ color: 'var(--legacy-slate-600)' }}>{item}</p>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-y-4 gap-x-8 border-t pt-6">
+                      <div className="grid grid-cols-2 gap-y-4 gap-x-8 border-t pt-6" style={{ borderColor: '#e2e8f0' }}>
                       {Object.entries(selectedProduct.params).map(([key, val]) => {
                         const labels: Record<string, string> = {
                           size: '尺寸',
@@ -870,13 +876,13 @@ export default function App() {
                         };
                         return (
                           <div key={key}>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-wider">{labels[key] || key}</p>
-                            <p className="text-sm font-bold text-slate-800">{val as string}</p>
+                            <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--legacy-slate-400)' }}>{labels[key] || key}</p>
+                            <p className="text-sm font-bold" style={{ color: 'var(--legacy-slate-800)' }}>{val as string}</p>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="border-t pt-6 flex justify-between items-end">
+                    <div className="border-t pt-6 flex justify-between items-end" style={{ borderColor: '#e2e8f0' }}>
                       <div className="space-y-4">
                         <img 
                           src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E8%BD%AC%E8%A7%92%E8%93%9D%E8%89%B2%E9%80%8F%E6%98%8E%E5%BA%95LOGO.png")} 
@@ -886,12 +892,12 @@ export default function App() {
                           referrerPolicy="no-referrer"
                         />
                         <div>
-                          <p className="text-price font-bold text-2xl">¥{selectedProduct.price}</p>
-                          <p className="text-[10px] text-slate-400 mt-1">扫描二维码了解更多详情</p>
+                          <p className="font-bold text-2xl" style={{ color: '#FF6B00' }}>¥{selectedProduct.price}</p>
+                          <p className="text-[10px] mt-1" style={{ color: 'var(--legacy-slate-400)' }}>扫描二维码了解更多详情</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="w-16 h-16 bg-white rounded-lg ml-auto flex items-center justify-center border border-slate-100 overflow-hidden shadow-sm">
+                        <div className="w-16 h-16 bg-white rounded-lg ml-auto flex items-center justify-center overflow-hidden shadow-sm" style={{ border: '1px solid var(--legacy-slate-100)' }}>
                           <img 
                             src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%AE%A2%E6%9C%8D%E4%BA%8C%E7%BB%B4%E7%A0%81.webp")} 
                             className="w-full h-full object-cover" 
@@ -900,7 +906,7 @@ export default function App() {
                             referrerPolicy="no-referrer"
                           />
                         </div>
-                        <p className="text-[10px] font-bold text-primary mt-2">转角网客服</p>
+                        <p className="text-[10px] font-bold mt-2" style={{ color: '#0052D9' }}>转角网客服</p>
                       </div>
                     </div>
 
