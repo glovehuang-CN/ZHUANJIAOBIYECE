@@ -90,7 +90,7 @@ export default function App() {
     try {
       setIsGenerating(true);
       // Wait for font/image rendering stabilizer
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       const canvas = await html2canvas(target, {
         useCORS: true,
@@ -763,8 +763,8 @@ export default function App() {
 
                   <div className="pt-4 flex justify-between items-end border-t" style={{ borderColor: '#e2e8f0' }}>
                     <div className="space-y-1">
-                      <p className="text-[10px]" style={{ color: 'var(--legacy-slate-400)' }}>扫码了解更多产品详情</p>
-                      <div className="w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center shadow-sm" style={{ border: '1px solid var(--legacy-slate-100)' }}>
+                      <p className="text-[10px]" style={{ color: '#94a3b8' }}>扫码了解更多产品详情</p>
+                      <div className="w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center shadow-sm" style={{ border: '1px solid #f1f5f9' }}>
                         <img 
                           src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%AE%A2%E6%9C%8D%E4%BA%8C%E7%BB%B4%E7%A0%81.webp")} 
                           className="w-full h-full object-cover" 
@@ -840,9 +840,9 @@ export default function App() {
                       crossOrigin="anonymous"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
-                      <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
-                      <p className="text-sm opacity-80">{selectedProduct.category}</p>
+                    <div className="absolute bottom-0 left-0 right-0 p-4" style={{ color: '#ffffff', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+                      <h2 className="text-2xl font-bold" style={{ color: '#ffffff' }}>{selectedProduct.name}</h2>
+                      <p className="text-sm opacity-80" style={{ color: '#ffffff' }}>{selectedProduct.category}</p>
                     </div>
                   </div>
                     <div className="p-6 space-y-6">
@@ -897,7 +897,7 @@ export default function App() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="w-16 h-16 bg-white rounded-lg ml-auto flex items-center justify-center overflow-hidden shadow-sm" style={{ border: '1px solid var(--legacy-slate-100)' }}>
+                        <div className="w-16 h-16 bg-white rounded-lg ml-auto flex items-center justify-center overflow-hidden shadow-sm" style={{ border: '1px solid #f1f5f9' }}>
                           <img 
                             src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%AE%A2%E6%9C%8D%E4%BA%8C%E7%BB%B4%E7%A0%81.webp")} 
                             className="w-full h-full object-cover" 
@@ -933,4 +933,3 @@ export default function App() {
     </div>
   );
 }
-
