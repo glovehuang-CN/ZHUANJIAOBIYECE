@@ -1,23 +1,40 @@
 <!doctype html>
 <html lang="en">
   <head>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<meta name="apple-mobile-web-app-title" content="转角纪念册">
-
-<script>
-  if ('service-worker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
-</script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#1e40af" />
     <title>转角网 - 毕业纪念册</title>
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <script>
+      /* * Corner Brand Protection System 
+       * Version: 2026.1.0
+       */
+      (function() {
+        // 密码已通过 Base64 加密处理，防止同行通过全局搜索密码字符串找到此处
+        var _0x5a21 = ["Wmh1YW5qaWFvUFJP", "Y29ybmVyX2F1dGhfMjAyNg=="]; 
+        
+        // 检查本地存储，避免已验证用户重复输入
+        try {
+          if (localStorage.getItem(atob(_0x5a21[1])) !== 'true') {
+            var userInput = prompt("【转角网毕业季·内部授权应用】\n请输入品牌授权码以继续访问：", "");
+            
+            // 验证逻辑：对比 Base64 解码后的密码
+            if (userInput === atob(_0x5a21[0])) {
+              // 验证通过，记录状态
+              localStorage.setItem(atob(_0x5a21[1]), 'true');
+            } else {
+              // 验证失败
+              alert("授权码无效。如有疑问，请咨询业务经理。");
+              // 强制重定向至空白页，防止查看后续内容
+              window.location.replace("about:blank");
+            }
+          }
+        } catch (e) {
+          // Fallback for private mode / blocked storage
+          console.warn("Storage blocked, auth may not persist.");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
