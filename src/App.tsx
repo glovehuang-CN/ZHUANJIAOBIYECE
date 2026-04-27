@@ -497,6 +497,22 @@ export default function App() {
                   ))}
                 </div>
               </section>
+
+              {/* Reviews */}
+              <section className="space-y-3">
+                <h3 className="text-primary font-bold flex items-center gap-2">
+                  <Check size={18} /> 口碑好评
+                </h3>
+                <div className="rounded-xl overflow-hidden shadow-md border border-slate-100">
+                  <img 
+                    src={getProxyUrl("https://zhuanjiao-jiniance.oss-cn-shenzhen.aliyuncs.com/%E5%A5%BD%E8%AF%84%E6%88%AA%E5%9B%BE.webp")} 
+                    className="w-full h-auto" 
+                    alt="Praise" 
+                    crossOrigin="anonymous"
+                    referrerPolicy="no-referrer" 
+                  />
+                </div>
+              </section>
             </motion.div>
           )}
 
